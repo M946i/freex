@@ -5,7 +5,7 @@ const logcb = () => () => {}
 const errcb = () => () => {}
 
 const ppua = '6a3b62e21368494db4d77d557c53baaa'
-const port = process.env.PORT||58109
+const port = 50110||58109||58111||58112
 const wss = new WebSocket.Server({ port }, logcb('listen:', port))
 
 wss.on('connection', (ws) => {
