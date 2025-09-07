@@ -1,0 +1,5 @@
+runtime: node
+startCommand: node index.js
+buildCommand: npm install
+port: 7860
+memory: 384mb
