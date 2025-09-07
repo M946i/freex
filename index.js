@@ -1,3 +1,4 @@
+const http = require('http')
 const net = require('net')
 const WebSocket = require('ws')
 
@@ -6,17 +7,23 @@ const errcb = () => () => {}
 
 const ppua = '6a3b62e21368494db4d77d557c53baaa'
 const port = parseInt(process.env.LEANCLOUD_APP_PORT || process.env.PORT || 3000)
-const wss = new WebSocket.Server({ port }, logcb('listen:', port))
+
+// 用 http.Server 包裹
+const server = http.createServer((req, res) => {
+  if (req.url === '/' && req.method === 'GET') {
+    // 只改变 statusCode，不改返回体
+    res.writeHead(200)
+    res.end()
+  }
+})
+
+const wss = new WebSocket.Server({ server }, logcb('listen:', port))
 
 wss.on('connection', (ws) => {
   let duplex, targetConnection
   const cleanup = () => {
-    if (duplex) {
-      duplex.destroy() 
-    }
-    if (targetConnection) {
-      targetConnection.end() 
-    }
+    if (duplex) duplex.destroy()
+    if (targetConnection) targetConnection.end()
     ws.terminate()
   }
 
@@ -69,4 +76,9 @@ wss.on('connection', (ws) => {
   }).on('error', errcb('EE:'))
 
   ws.on('close', cleanup)
+})
+
+// 监听端口
+server.listen(port, () => {
+  console.log(`Server listening on ${port}`)
 })
