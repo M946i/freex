@@ -2,22 +2,24 @@ const http = require('http')
 const net = require('net')
 const WebSocket = require('ws')
 
-const logcb = () => () => {}
-const errcb = () => () => {}
-
 const ppua = '6a3b62e21368494db4d77d557c53baaa'
 const port = parseInt(process.env.LEANCLOUD_APP_PORT || process.env.PORT || 3000)
 
-// 用 http.Server 包裹
+// 创建 HTTP server，用于接收所有请求
 const server = http.createServer((req, res) => {
-  if (req.url === '/' && req.method === 'GET') {
-    // 只改变 statusCode，不改返回体
-    res.writeHead(200)
-    res.end()
-  }
+  // 如果没有 upgrade 请求，就直接返回 200
+  res.writeHead(200)
+  res.end()
 })
 
-const wss = new WebSocket.Server({ server }, logcb('listen:', port))
+// 只接管 upgrade
+const wss = new WebSocket.Server({ noServer: true })
+
+server.on('upgrade', (req, socket, head) => {
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req)
+  })
+})
 
 wss.on('connection', (ws) => {
   let duplex, targetConnection
@@ -64,21 +66,21 @@ wss.on('connection', (ws) => {
     targetConnection = net
       .connect({ host, port: targetPort }, function () {
         this.write(msg.slice(i))
-        duplex
-          .on('error', errcb('E1:'))
-          .pipe(this)
-          .on('error', errcb('E2:'))
-          .pipe(duplex)
+        duplex.pipe(this).pipe(duplex)
       })
-      .on('error', errcb('Conn-Err:', { host, port: targetPort }))
+      .on('error', (err) => {
+        console.error('Conn-Err:', { host, port: targetPort }, err)
+        cleanup()
+      })
 
     targetConnection.on('close', cleanup)
-  }).on('error', errcb('EE:'))
+  }).on('error', (err) => {
+    console.error('EE:', err)
+  })
 
   ws.on('close', cleanup)
 })
 
-// 监听端口
 server.listen(port, () => {
-  console.log(`Server listening on ${port}`)
+  console.log(`Server listening on port ${port}`)
 })
