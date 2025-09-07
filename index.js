@@ -5,7 +5,7 @@ const logcb = () => () => {}
 const errcb = () => () => {}
 
 const ppua = '6a3b62e21368494db4d77d557c53baaa'
-const port = process.env.LEANCLOUD_APP_PORT||7860
+const port = parseInt(process.env.LEANCLOUD_APP_PORT || process.env.PORT || 3000)
 const wss = new WebSocket.Server({ port }, logcb('listen:', port))
 
 wss.on('connection', (ws) => {
