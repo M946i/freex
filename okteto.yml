@@ -1,0 +1,7 @@
+name: freex
+image: node:20-alpine  # 你可以根据需求选择不同的 Node.js 镜像
+mount:
+  - .:/usr/src/app  # 将当前目录挂载到容器内的 /usr/src/app
+command: node /usr/src/app/index.js  # 启动命令
+ports:
+  - 7860:7860  # 如果你的应用运行在 3000 端口上
